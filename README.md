@@ -1,15 +1,15 @@
 # Gib Vid
 
-<img src="GibVid/Resources/Assets.xcassets/AppIcon.appiconset/icon.png" width="96" height="96" alt="Icône de Gib Vid, un photogramme plié">
+<img src="GibVid/Resources/Assets.xcassets/AppIcon.appiconset/icon.png" width="96" height="96" alt="Gib Vid icon showing a folded film frame">
 
-Gib Vid enregistre une vidéo dans Photos à partir d’un lien copié. L’iPhone contacte directement le site de la vidéo, télécharge les pistes et les assemble sur l’appareil. L’application fonctionne sans compte Gib Vid et sans serveur intermédiaire.
+Copy a video link and save the video to Photos on your iPhone. Gib Vid downloads the audio and video tracks directly from the source and combines them on your device. You don’t need a Gib Vid account or a separate server.
 
-## Installer sur son iPhone
+## Install on your iPhone
 
-Il faut un Mac avec Xcode, [XcodeGen](https://github.com/yonaskolb/XcodeGen), Python 3.10 ou ultérieur avec pip, et un iPhone sous iOS 18 ou ultérieur. La première compilation télécharge le runtime Python et les paquets depuis GitHub et PyPI.
+You’ll need a Mac with Xcode, [XcodeGen](https://github.com/yonaskolb/XcodeGen), and Python 3.10 or later with pip, plus an iPhone running iOS 18 or later. The setup script downloads the Python runtime from GitHub and the Python packages from PyPI.
 
-1. Récupère les sources et ouvre un terminal à la racine du projet. Si tu utilises Homebrew, la commande `brew install xcodegen` installe XcodeGen.
-2. Prépare les dépendances et génère le projet Xcode.
+1. Clone or download the repository and open a terminal in the project directory. If you use Homebrew, you can install XcodeGen with `brew install xcodegen`.
+2. Download the dependencies, generate the Xcode project, and open it.
 
    ```sh
    ./scripts/fetch_deps.sh
@@ -17,24 +17,24 @@ Il faut un Mac avec Xcode, [XcodeGen](https://github.com/yonaskolb/XcodeGen), Py
    open GibVid.xcodeproj
    ```
 
-3. Dans Xcode, sélectionne la cible **GibVid**, puis **Signing & Capabilities**. Choisis ton équipe Apple dans **Team** et remplace `org.example.GibVid` par un **Bundle Identifier** unique. Si aucune équipe n’apparaît, ajoute ton compte Apple dans les réglages de Xcode.
-4. Branche ton iPhone, sélectionne-le comme destination et lance l’app avec **⌘R**. Active le mode développeur sur l’iPhone si Xcode le demande.
+3. In Xcode, select the **GibVid** target and open **Signing & Capabilities**. Choose your Apple development team under **Team** and replace `org.example.GibVid` with a unique **Bundle Identifier**. If the team list is empty, add your Apple Account in Xcode settings.
+4. Connect your iPhone, select it as the run destination, and press **⌘R**. Enable Developer Mode on your iPhone if Xcode prompts you.
 
-Le projet Xcode est généré. Pour conserver tes réglages après un nouvel appel à `xcodegen generate`, reporte ton identifiant et ton équipe dans ta copie locale de [project.yml](project.yml).
+To keep your signing settings when you run `xcodegen generate` again, set your bundle identifier and development team in your local copy of [project.yml](project.yml).
 
-## Enregistrer une vidéo
+## Save a video
 
-1. Copie le lien d’une vidéo que tu as le droit de télécharger.
-2. Ouvre Gib Vid, touche le grand bouton et autorise l’ajout à Photos au premier téléchargement.
-3. Retrouve la vidéo dans Photos une fois l’enregistrement terminé.
+1. Copy the link to a video you have permission to download.
+2. Open Gib Vid and tap the large download button. The first time you download a video, allow Gib Vid to add it to Photos.
+3. Once the download finishes, open Photos to find your video.
 
-Avec l’app Raccourcis, l’action **Ouvrir les URL** avec `gibvid://` lance le téléchargement du lien copié. Pour transmettre un lien directement, utilise `gibvid://?url=<URL encodée>`.
+In Shortcuts, use the **Open URLs** action with `gibvid://` to download the link on your clipboard. To pass a link directly, use `gibvid://?url=<percent-encoded URL>`.
 
-La prise en charge des sites dépend de yt-dlp et des formats que Photos peut importer. Les directs, les publications composées uniquement de photos et les vidéos qui exigent une connexion au site ne sont pas pris en charge.
+Which videos you can save depends on the sites yt-dlp supports and the media formats Photos can import. Gib Vid doesn’t support live streams, photo-only posts, or videos that require you to sign in.
 
-## Compiler pour le simulateur
+## Build for the simulator
 
-Après avoir installé un runtime iOS Simulator dans Xcode, exécute les commandes suivantes à la racine d’une copie fraîche. Cette compilation utilise la signature locale du simulateur.
+Install an iOS Simulator runtime in Xcode, then run these commands from the root of a fresh checkout. The simulator build uses local code signing.
 
 ```sh
 ./scripts/fetch_deps.sh
@@ -43,13 +43,13 @@ xcodebuild -project GibVid.xcodeproj -scheme GibVid -configuration Debug \
   -destination 'generic/platform=iOS Simulator' build
 ```
 
-## Fonctionnement
+## How it works
 
-- **Extraction** — [yt-dlp](https://github.com/yt-dlp/yt-dlp) tourne dans [Python pour iOS](https://github.com/beeware/Python-Apple-support). Le [pont C](GibVid/Bridge/GibBridge.c) relie Swift au [moteur Python](python/app/gibvid.py).
-- **JavaScript** — le [fournisseur yt-dlp](python/app/gibvid_jsc.py) utilise JavaScriptCore sur l’iPhone.
-- **Assemblage** — Gib Vid peut [remettre en forme les MP4 fragmentés](python/app/gibvid_mp4.py) et [réunir les pistes audio et vidéo](GibVid/Media/VideoAssembler.swift) avec AVFoundation.
-- **Mises à jour** — la compilation installe les [versions embarquées](scripts/requirements-ios.txt). Sur l’iPhone, l’app consulte aussi PyPI au démarrage si sa dernière vérification remonte à plus de 12 heures. Elle vérifie l’empreinte SHA-256 des paquets récupérés. Toucher le numéro de version lance une vérification manuelle.
+- [yt-dlp](https://github.com/yt-dlp/yt-dlp) extracts video links using [Python for iOS](https://github.com/beeware/Python-Apple-support). A [C bridge](GibVid/Bridge/GibBridge.c) connects the Swift app to the [Python engine](python/app/gibvid.py).
+- The [JavaScript provider for yt-dlp](python/app/gibvid_jsc.py) runs scripts on the iPhone using JavaScriptCore.
+- Gib Vid can [convert fragmented MP4s into regular MP4s](python/app/gibvid_mp4.py) and [combine separate audio and video tracks](GibVid/Media/VideoAssembler.swift) using AVFoundation.
+- Each build includes [pinned Python packages](scripts/requirements-ios.txt). On launch, the app checks PyPI for a yt-dlp update if more than 12 hours have passed since the last check. It verifies the SHA-256 hash of each package it downloads. Tap the version number to check for updates manually.
 
-## Licence
+## License
 
-Le code et l’icône de Gib Vid sont distribués sous [licence MIT](LICENSE). Python, yt-dlp, yt-dlp-ejs, certifi et leurs composants conservent leurs licences respectives.
+The Gib Vid source code and app icon are available under the [MIT License](LICENSE). Python, yt-dlp, yt-dlp-ejs, certifi, and their components retain their respective licenses.
