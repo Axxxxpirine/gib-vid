@@ -1,0 +1,9 @@
+# Générés : lancer scripts/fetch_deps.sh puis xcodegen
+Vendor/
+python/app_packages/
+GibVid.xcodeproj/
+build/
+DerivedData/
+.DS_Store
+xcuserdata/
+__pycache__/
