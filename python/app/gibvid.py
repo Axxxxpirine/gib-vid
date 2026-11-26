@@ -224,6 +224,33 @@ def _has_video(fmt):
     return fmt.get('vcodec') != 'none' or fmt.get('ext') in ('mp4', 'mov', 'm4v', 'webm')
 
 
+_TWITTER_MEDIA_URL = re.compile(
+    r'^(https?://(?:(?:www|mobile)\.)?(?:twitter|x)\.com/(?:i/web|[^/]+)/status/\d+)/(?:video|photo)/(\d+)')
+
+
+def _extract(ydl, url):
+    """extract_info, plus un contournement pour les GIF de X/Twitter.
+
+    Pour un lien de partage « …/status/<id>/video/1 », yt-dlp refuse tout média
+    dont le type n'est pas « video » ; or X classe les GIF en « animated_gif »
+    (« Media #1 is not a video »). Sans le numéro de média, yt-dlp les récupère
+    bien (en MP4 H.264 sans son) : on réessaie donc sans, puis on garde le média visé.
+    """
+    from yt_dlp.utils import DownloadError
+    try:
+        return ydl.extract_info(url, download=False)
+    except DownloadError as e:
+        match = _TWITTER_MEDIA_URL.match(url)
+        if not match or 'is not a video' not in str(e):
+            raise
+    _journal('↻ GIF X/Twitter : nouvelle tentative sans le numéro de média')
+    _check_cancelled()
+    info = ydl.extract_info(match.group(1), download=False)
+    entries = list(_entries(info))
+    index = int(match.group(2)) - 1
+    return entries[index] if len(entries) > 1 and index < len(entries) else info
+
+
 def download(payload):
     request = json.loads(payload)
     url, outdir = request['url'], request['outdir']
@@ -274,7 +301,7 @@ def download(payload):
         }
 
         with yt_dlp.YoutubeDL(options) as ydl:
-            info = ydl.extract_info(url, download=False)
+            info = _extract(ydl, url)
             _check_cancelled()
             entries = [e for e in _entries(info) if any(_has_video(f) for f in e.get('requested_formats') or [e])]
             if not entries:
@@ -322,6 +349,7 @@ _ERRORS = [
     (r'live event|is live|premieres in', 'Les directs ne sont pas pris en charge.'),
     (r'Unable to download webpage|Connection|timed out|Network is unreachable|Temporary failure', 'Connexion impossible. Vérifie ton réseau.'),
     (r'Requested format is not available|No video formats', 'Aucun format vidéo compatible trouvé.'),
+    (r'No video could be found|is not a video', 'Aucune vidéo ni GIF trouvé à ce lien.'),
 ]
 
 

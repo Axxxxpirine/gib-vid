@@ -30,6 +30,8 @@ To keep your signing settings when you run `xcodegen generate` again, set your b
 
 In Shortcuts, use the **Open URLs** action with `gibvid://` to download the link on your clipboard. To pass a link directly, use `gibvid://?url=<percent-encoded URL>`.
 
+Gib Vid also saves GIFs from X (formerly Twitter), including from share links that end in `/video/1`. Each GIF appears in Photos as a short video without sound.
+
 Which videos you can save depends on the sites yt-dlp supports and the media formats Photos can import. Gib Vid doesn’t support live streams, photo-only posts, or videos that require you to sign in.
 
 ## Build for the simulator
@@ -47,6 +49,7 @@ xcodebuild -project GibVid.xcodeproj -scheme GibVid -configuration Debug \
 
 - [yt-dlp](https://github.com/yt-dlp/yt-dlp) extracts video links using [Python for iOS](https://github.com/beeware/Python-Apple-support). A [C bridge](GibVid/Bridge/GibBridge.c) connects the Swift app to the [Python engine](python/app/gibvid.py).
 - The [JavaScript provider for yt-dlp](python/app/gibvid_jsc.py) runs scripts on the iPhone using JavaScriptCore.
+- For X share links that point to a GIF, yt-dlp reports that the media isn’t a video. The [Python engine](python/app/gibvid.py) then tries the post again without the media number.
 - Gib Vid can [convert fragmented MP4s into regular MP4s](python/app/gibvid_mp4.py) and [combine separate audio and video tracks](GibVid/Media/VideoAssembler.swift) using AVFoundation.
 - Each build includes [pinned Python packages](scripts/requirements-ios.txt). On launch, the app checks PyPI for a yt-dlp update if more than 12 hours have passed since the last check. It verifies the SHA-256 hash of each package it downloads. Tap the version number to check for updates manually.
 
